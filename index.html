@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>英語学習進捗管理</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f6f3ec;
+      color: #333;
+    }
+
+    header {
+      padding: 20px;
+      text-align: center;
+      background: #3f5f4f;
+      color: white;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .controls,
+    .summary {
+      background: white;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 16px;
+      background: #3f5f4f;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      opacity: 0.85;
+    }
+
+    .month-title {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+
+    .summary-card {
+      background: #f6f3ec;
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .summary-card strong {
+      display: block;
+      font-size: 22px;
+      margin-top: 6px;
+    }
+
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+    }
+
+    .weekday {
+      text-align: center;
+      font-weight: bold;
+      padding: 8px;
+      color: #666;
+    }
+
+    .day {
+      background: white;
+      min-height: 150px;
+      border-radius: 14px;
+      padding: 10px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+    }
+
+    .empty {
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .date {
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .task {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 6px 0;
+      font-size: 14px;
+    }
+
+    .check {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #ddd;
+      color: #777;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .check.done {
+      background: #3f5f4f;
+      color: white;
+    }
+
+    @media (max-width: 700px) {
+      .calendar {
+        grid-template-columns: 1fr;
+      }
+
+      .weekday {
+        display: none;
+      }
+
+      .summary-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .day {
+        min-height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>英語学習進捗管理</h1>
+    <p>単語・文法・英会話・リスニング</p>
+  </header>
+
+  <div class="container">
+    <div class="controls">
+      <button onclick="changeMonth(-1)">前の月</button>
+      <div class="month-title" id="monthTitle"></div>
+      <button onclick="changeMonth(1)">次の月</button>
+    </div>
+
+    <div class="summary">
+      <h2>今月の達成率</h2>
+      <div class="summary-grid" id="summaryGrid"></div>
+    </div>
+
+    <div class="calendar" id="calendar"></div>
+  </div>
+
+  <script>
+    const tasks = ["単語", "文法", "英会話", "リスニング"];
+    let currentDate = new Date();
+
+    function getKey(date, task) {
+      return `${date}-${task}`;
+    }
+
+    function loadData(date, task) {
+      return localStorage.getItem(getKey(date, task)) === "true";
+    }
+
+    function saveData(date, task, value) {
+      localStorage.setItem(getKey(date, task), value);
+    }
+
+    function toggleTask(date, task) {
+      const current = loadData(date, task);
+      saveData(date, task, !current);
+      render();
+    }
+
+    function changeMonth(offset) {
+      currentDate.setMonth(currentDate.getMonth() + offset);
+      render();
+    }
+
+    function formatDate(year, month, day) {
+      return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    }
+
+    function renderSummary(year, month, daysInMonth) {
+      const summaryGrid = document.getElementById("summaryGrid");
+      summaryGrid.innerHTML = "";
+
+      let totalDone = 0;
+      let totalPossible = daysInMonth * tasks.length;
+
+      tasks.forEach(task => {
+        let done = 0;
+
+        for (let day = 1; day <= daysInMonth; day++) {
+          const date = formatDate(year, month, day);
+          if (loadData(date, task)) done++;
+        }
+
+        totalDone += done;
+
+        const rate = Math.round((done / daysInMonth) * 100);
+
+        summaryGrid.innerHTML += `
+          <div class="summary-card">
+            ${task}
+            <strong>${rate}%</strong>
+            <small>${done}/${daysInMonth}日</small>
+          </div>
+        `;
+      });
+
+      const totalRate = Math.round((totalDone / totalPossible) * 100);
+
+      summaryGrid.innerHTML += `
+        <div class="summary-card">
+          総合
+          <strong>${totalRate}%</strong>
+          <small>${totalDone}/${totalPossible}</small>
+        </div>
+      `;
+    }
+
+    function render() {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+
+      document.getElementById("monthTitle").textContent =
+        `${year年 ${month + 1}月`;
+
+      const calendar = document.getElementById("calendar");
+      calendar.innerHTML = "";
+
+      const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+      weekdays.forEach(day => {
+        calendar.innerHTML += `<div class="weekday">${day}</div>`;
+      });
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      for (let i = 0; i < firstDay; i++) {
+        calendar.innerHTML += `<div class="day empty"></div>`;
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = formatDate(year, month, day);
+
+        let taskHtml = tasks.map(task => {
+          const done = loadData(date, task);
+          return `
+            <div class="task">
+              <span>${task}</span>
+              <div 
+                class="check ${done ? "done" : ""}"
+                onclick="toggleTask('${date}', '${task}')"
+              >
+                ${done ? "○" : "×"}
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        calendar.innerHTML += `
+          <div class="day">
+            <div class="date">${day}</div>
+            ${taskHtml}
+          </div>
+        `;
+      }
+
+      renderSummary(year, month, daysInMonth);
+    }
+
+    render();
+  </script>
+</body>
+</html>
