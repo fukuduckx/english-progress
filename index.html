@@ -3,26 +3,42 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>英語学習進捗管理 v3</title>
+  <title>英語学習進捗管理 v4</title>
 
   <style>
+    :root {
+      --main: #3f5f4f;
+      --main-dark: #2f493c;
+      --bg: #f6f3ec;
+      --card: #ffffff;
+      --soft: #f3eee4;
+      --text: #333333;
+      --muted: #666666;
+      --danger: #9b3f3f;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f6f3ec;
-      color: #333;
+      background: var(--bg);
+      color: var(--text);
+      padding-bottom: 78px;
     }
 
     header {
-      padding: 32px 20px;
+      padding: 28px 20px 24px;
       text-align: center;
-      background: #3f5f4f;
+      background: var(--main);
       color: white;
     }
 
     header h1 {
       margin: 0 0 8px;
-      font-size: 30px;
+      font-size: 28px;
     }
 
     header p {
@@ -38,65 +54,77 @@
     }
 
     .card {
-      background: white;
-      border-radius: 16px;
+      background: var(--card);
+      border-radius: 18px;
       padding: 16px;
       margin-bottom: 16px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     }
 
-    .controls {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 22px;
+    }
+
+    h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
     }
 
     button {
       border: none;
       border-radius: 999px;
-      padding: 10px 16px;
-      background: #3f5f4f;
+      padding: 11px 16px;
+      background: var(--main);
       color: white;
       font-weight: bold;
       cursor: pointer;
+      font-size: 14px;
     }
 
     button:hover {
-      opacity: 0.85;
+      opacity: 0.9;
     }
 
     .danger-button {
-      background: #9b3f3f;
+      background: var(--danger);
     }
 
     input[type="date"],
     textarea {
-      box-sizing: border-box;
       width: 100%;
-      padding: 10px;
-      border-radius: 10px;
+      padding: 11px;
+      border-radius: 12px;
       border: 1px solid #ccc;
-      font-size: 15px;
+      font-size: 16px;
       font-family: inherit;
-    }
-
-    input[type="date"] {
-      max-width: 220px;
-      width: auto;
-    }
-
-    textarea {
-      min-height: 80px;
-      resize: vertical;
-      margin-top: 8px;
       background: #fffaf2;
     }
 
-    .month-title {
-      font-size: 22px;
-      font-weight: bold;
-      text-align: center;
+    input[type="date"] {
+      max-width: 230px;
+      background: white;
+    }
+
+    textarea {
+      min-height: 95px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+      margin: 8px 0 0;
+      line-height: 1.6;
     }
 
     .dashboard-grid {
@@ -106,43 +134,108 @@
     }
 
     .dashboard-box {
-      background: #f6f3ec;
-      border-radius: 14px;
-      padding: 16px;
+      background: var(--soft);
+      border-radius: 16px;
+      padding: 14px;
       text-align: center;
     }
 
     .dashboard-box span {
       display: block;
-      color: #666;
-      font-size: 14px;
+      color: var(--muted);
+      font-size: 13px;
       margin-bottom: 6px;
     }
 
     .dashboard-box strong {
-      font-size: 28px;
-      color: #3f5f4f;
+      font-size: 26px;
+      color: var(--main);
+    }
+
+    .today-main {
+      background: linear-gradient(180deg, #ffffff, #f8f5ee);
+      border-radius: 22px;
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    }
+
+    .today-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .today-date {
+      color: var(--muted);
+      font-size: 14px;
     }
 
     .today-task-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 12px;
     }
 
     .today-task {
-      background: #f6f3ec;
-      border-radius: 14px;
-      padding: 14px;
+      background: var(--soft);
+      border-radius: 18px;
+      padding: 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      min-height: 70px;
+      font-size: 17px;
+      font-weight: bold;
+    }
+
+    .check {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #ddd;
+      color: #777;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      cursor: pointer;
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    .check.done {
+      background: var(--main);
+      color: white;
+    }
+
+    .memo-label {
+      display: block;
+      margin: 12px 0 6px;
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: bold;
     }
 
     .plan-list {
       margin: 0;
       padding-left: 20px;
-      line-height: 1.8;
+      line-height: 1.9;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .month-title {
+      font-size: 22px;
+      font-weight: bold;
+      text-align: center;
     }
 
     .summary-grid {
@@ -152,8 +245,8 @@
     }
 
     .summary-card {
-      background: #f6f3ec;
-      border-radius: 12px;
+      background: var(--soft);
+      border-radius: 14px;
       padding: 12px;
       text-align: center;
     }
@@ -162,11 +255,11 @@
       display: block;
       font-size: 24px;
       margin-top: 6px;
-      color: #3f5f4f;
+      color: var(--main);
     }
 
     .summary-card small {
-      color: #666;
+      color: var(--muted);
     }
 
     .calendar {
@@ -179,7 +272,7 @@
       text-align: center;
       font-weight: bold;
       padding: 8px;
-      color: #666;
+      color: var(--muted);
     }
 
     .day {
@@ -191,7 +284,7 @@
     }
 
     .day.today {
-      outline: 3px solid #3f5f4f;
+      outline: 3px solid var(--main);
     }
 
     .empty {
@@ -212,45 +305,11 @@
       font-size: 14px;
     }
 
-    .check {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      background: #ddd;
-      color: #777;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      cursor: pointer;
-      user-select: none;
-      flex-shrink: 0;
-    }
-
-    .check.done {
-      background: #3f5f4f;
-      color: white;
-    }
-
-    .memo-label {
-      display: block;
-      margin-top: 10px;
-      font-size: 13px;
-      color: #666;
-      font-weight: bold;
-    }
-
     .day-memo {
       min-height: 54px;
       font-size: 13px;
       padding: 8px;
       margin-top: 6px;
-    }
-
-    .hint {
-      color: #666;
-      font-size: 13px;
-      margin-top: 8px;
     }
 
     .button-row {
@@ -260,28 +319,97 @@
       margin-top: 12px;
     }
 
+    .bottom-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 70px;
+      background: white;
+      border-top: 1px solid #ddd;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      z-index: 100;
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.08);
+    }
+
+    .nav-item {
+      border: none;
+      background: white;
+      color: var(--muted);
+      border-radius: 0;
+      padding: 8px 4px;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+
+    .nav-item span {
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .nav-item.active {
+      color: var(--main);
+      font-weight: bold;
+      background: #eef4f0;
+    }
+
+    .desktop-note {
+      display: none;
+    }
+
     @media (max-width: 900px) {
       .dashboard-grid {
         grid-template-columns: repeat(2, 1fr);
       }
 
-      .summary-grid,
-      .today-task-grid {
+      .summary-grid {
         grid-template-columns: repeat(2, 1fr);
       }
     }
 
     @media (max-width: 700px) {
+      header {
+        padding: 22px 16px 20px;
+      }
+
+      header h1 {
+        font-size: 24px;
+      }
+
       .container {
         padding: 12px;
       }
 
       .calendar {
-        grid-template-columns: 1fr;
+        display: block;
       }
 
-      .weekday {
+      .weekday,
+      .empty {
         display: none;
+      }
+
+      .day {
+        min-height: auto;
+        margin-bottom: 10px;
+      }
+
+      .date {
+        font-size: 18px;
+      }
+
+      .controls {
+        gap: 10px;
+      }
+
+      .month-title {
+        font-size: 18px;
       }
 
       .summary-grid,
@@ -290,22 +418,17 @@
         grid-template-columns: 1fr 1fr;
       }
 
-      .day {
-        min-height: auto;
-      }
-
-      .controls {
-        gap: 12px;
-      }
-
-      .month-title {
-        font-size: 18px;
+      .today-task {
+        min-height: 72px;
       }
     }
 
-    @media (max-width: 420px) {
+    @media (max-width: 430px) {
       .summary-grid,
-      .dashboard-grid,
+      .dashboard-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
       .today-task-grid {
         grid-template-columns: 1fr;
       }
@@ -314,9 +437,35 @@
         flex-direction: column;
       }
 
+      .controls button {
+        width: 100%;
+      }
+
       input[type="date"] {
         width: 100%;
         max-width: none;
+      }
+
+      .dashboard-box strong {
+        font-size: 24px;
+      }
+    }
+
+    @media (min-width: 900px) {
+      body {
+        padding-bottom: 0;
+      }
+
+      .bottom-nav {
+        display: none;
+      }
+
+      .screen {
+        display: block;
+      }
+
+      .desktop-note {
+        display: block;
       }
     }
   </style>
@@ -330,73 +479,115 @@
 
   <div class="container">
 
-    <div class="card">
-      <h2>学習スタート設定</h2>
-      <label for="startDate">学習開始日：</label>
-      <input type="date" id="startDate" />
-      <button id="saveStartDate">保存</button>
-      <p class="hint">最初に一度だけ設定してください。あとから変更もできます。</p>
-    </div>
+    <section id="screenToday" class="screen active">
+      <div class="today-main">
+        <div class="today-title-row">
+          <div>
+            <h2>今日の学習</h2>
+            <div class="today-date" id="todayDateText"></div>
+          </div>
+          <button id="goCalendarFromToday">カレンダー</button>
+        </div>
 
-    <div class="card">
-      <h2>現在の状況</h2>
-      <div class="dashboard-grid">
-        <div class="dashboard-box">
-          <span>今日は</span>
-          <strong id="studyDayText">-</strong>
-        </div>
-        <div class="dashboard-box">
-          <span>連続学習</span>
-          <strong id="streakText">0日</strong>
-        </div>
-        <div class="dashboard-box">
-          <span>今週の達成率</span>
-          <strong id="weeklyTotalRateText">0%</strong>
-        </div>
-        <div class="dashboard-box">
-          <span>今月の達成率</span>
-          <strong id="monthlyTotalRateText">0%</strong>
+        <div class="today-task-grid" id="todayTaskGrid"></div>
+
+        <label class="memo-label" for="todayMemo">今日のメモ</label>
+        <textarea id="todayMemo" placeholder="例：今日は金フレ50語。英会話で自己紹介が少し詰まった。"></textarea>
+        <p class="hint">入力すると自動で保存されます。</p>
+      </div>
+
+      <div class="card">
+        <h2>現在の状況</h2>
+        <div class="dashboard-grid">
+          <div class="dashboard-box">
+            <span>今日は</span>
+            <strong id="studyDayText">-</strong>
+          </div>
+          <div class="dashboard-box">
+            <span>連続学習</span>
+            <strong id="streakText">0日</strong>
+          </div>
+          <div class="dashboard-box">
+            <span>今週</span>
+            <strong id="weeklyTotalRateText">0%</strong>
+          </div>
+          <div class="dashboard-box">
+            <span>今月</span>
+            <strong id="monthlyTotalRateText">0%</strong>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="card">
-      <h2>今日の学習</h2>
-      <div class="today-task-grid" id="todayTaskGrid"></div>
-
-      <label class="memo-label" for="todayMemo">今日のメモ</label>
-      <textarea id="todayMemo" placeholder="例：今日は金フレ50語。英会話で自己紹介が少し詰まった。"></textarea>
-      <p class="hint">入力すると自動で保存されます。</p>
-    </div>
-
-    <div class="card">
-      <h2>今月の学習プラン</h2>
-      <h3 id="monthlyGoal"></h3>
-      <ul class="plan-list" id="monthlyPlan"></ul>
-    </div>
-
-    <div class="card controls">
-      <button id="prevMonth">前の月</button>
-      <div class="month-title" id="monthTitle"></div>
-      <button id="nextMonth">次の月</button>
-    </div>
-
-    <div class="card">
-      <h2>今月の達成率</h2>
-      <div class="summary-grid" id="summaryGrid"></div>
-    </div>
-
-    <div class="card">
-      <h2>データ管理</h2>
-      <p class="hint">CSV書き出しをすると、学習記録をスプレッドシートなどで確認できます。</p>
-      <div class="button-row">
-        <button id="exportCsv">CSVを書き出す</button>
-        <button id="resetData" class="danger-button">全データをリセット</button>
+    <section id="screenCalendar" class="screen">
+      <div class="card controls">
+        <button id="prevMonth">前の月</button>
+        <div class="month-title" id="monthTitle"></div>
+        <button id="nextMonth">次の月</button>
       </div>
-    </div>
 
-    <div class="calendar" id="calendar"></div>
+      <div class="card">
+        <h2>今月の達成率</h2>
+        <div class="summary-grid" id="summaryGrid"></div>
+      </div>
+
+      <div class="calendar" id="calendar"></div>
+    </section>
+
+    <section id="screenPlan" class="screen">
+      <div class="card">
+        <h2>学習スタート設定</h2>
+        <label for="startDate">学習開始日：</label>
+        <input type="date" id="startDate" />
+        <button id="saveStartDate">保存</button>
+        <p class="hint">最初に一度だけ設定してください。あとから変更もできます。</p>
+      </div>
+
+      <div class="card">
+        <h2>今月の学習プラン</h2>
+        <h3 id="monthlyGoal"></h3>
+        <ul class="plan-list" id="monthlyPlan"></ul>
+      </div>
+    </section>
+
+    <section id="screenData" class="screen">
+      <div class="card">
+        <h2>データ管理</h2>
+        <p class="hint">CSV書き出しをすると、学習記録をスプレッドシートなどで確認できます。</p>
+        <div class="button-row">
+          <button id="exportCsv">CSVを書き出す</button>
+          <button id="resetData" class="danger-button">全データをリセット</button>
+        </div>
+      </div>
+
+      <div class="card desktop-note">
+        <h2>使い方メモ</h2>
+        <p class="hint">
+          PCでは全画面が一覧表示されます。スマホでは下のタブから「今日」「カレンダー」「プラン」「データ」を切り替えられます。
+        </p>
+      </div>
+    </section>
+
   </div>
+
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-screen="screenToday">
+      <span>☀️</span>
+      今日
+    </button>
+    <button class="nav-item" data-screen="screenCalendar">
+      <span>📅</span>
+      記録
+    </button>
+    <button class="nav-item" data-screen="screenPlan">
+      <span>📘</span>
+      プラン
+    </button>
+    <button class="nav-item" data-screen="screenData">
+      <span>⚙️</span>
+      データ
+    </button>
+  </nav>
 
   <script>
     const tasks = ["単語", "文法", "英会話", "リスニング"];
@@ -404,7 +595,6 @@
 
     const monthlyPlans = [
       {
-        month: 1,
         goal: "基礎英語の復活",
         plan: [
           "金のフレーズを1日50語見る",
@@ -414,7 +604,6 @@
         ]
       },
       {
-        month: 2,
         goal: "高校英語のやり直し",
         plan: [
           "Grammar in Use Unit 31〜60を進める",
@@ -424,7 +613,6 @@
         ]
       },
       {
-        month: 3,
         goal: "TOEIC700点レベルを目指す",
         plan: [
           "公式TOEIC問題集を使い始める",
@@ -434,7 +622,6 @@
         ]
       },
       {
-        month: 4,
         goal: "広告英語を始める",
         plan: [
           "広告・マーケティング系の記事の見出しを読む",
@@ -444,7 +631,6 @@
         ]
       },
       {
-        month: 5,
         goal: "営業英語を身につける",
         plan: [
           "課題ヒアリングの英語表現を練習する",
@@ -454,7 +640,6 @@
         ]
       },
       {
-        month: 6,
         goal: "TOEIC750〜800点を目指す",
         plan: [
           "TOEIC模試を月2回解く",
@@ -464,7 +649,6 @@
         ]
       },
       {
-        month: 7,
         goal: "英文日記を始める",
         plan: [
           "毎日3行の英文日記を書く",
@@ -474,7 +658,6 @@
         ]
       },
       {
-        month: 8,
         goal: "広告記事を要約する",
         plan: [
           "週1本、広告記事を英語で要約する",
@@ -484,7 +667,6 @@
         ]
       },
       {
-        month: 9,
         goal: "会議英語を練習する",
         plan: [
           "進捗報告を英語で練習する",
@@ -494,7 +676,6 @@
         ]
       },
       {
-        month: 10,
         goal: "転職準備を始める",
         plan: [
           "英語履歴書の下書きを作る",
@@ -504,7 +685,6 @@
         ]
       },
       {
-        month: 11,
         goal: "英語面接対策",
         plan: [
           "Tell me about yourself を練習する",
@@ -514,8 +694,7 @@
         ]
       },
       {
-        month: 12,
-        goal: "外資系広告企業への応募準備",
+        goal: "応募準備の仕上げ",
         plan: [
           "英語面接を実践形式で練習する",
           "応募先企業を調べる",
@@ -536,6 +715,12 @@
       return formatDate(today.getFullYear(), today.getMonth(), today.getDate());
     }
 
+    function getJapaneseDateText(dateText) {
+      const date = new Date(dateText + "T00:00:00");
+      const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+      return (date.getMonth() + 1) + "月" + date.getDate() + "日（" + weekdays[date.getDay()] + "）";
+    }
+
     function getKey(dateText, taskName) {
       return "english-progress-" + dateText + "-" + taskName;
     }
@@ -545,13 +730,11 @@
     }
 
     function loadData(dateText, taskName) {
-      const key = getKey(dateText, taskName);
-      return localStorage.getItem(key) === "true";
+      return localStorage.getItem(getKey(dateText, taskName)) === "true";
     }
 
     function saveData(dateText, taskName, value) {
-      const key = getKey(dateText, taskName);
-      localStorage.setItem(key, value ? "true" : "false");
+      localStorage.setItem(getKey(dateText, taskName), value ? "true" : "false");
     }
 
     function loadMemo(dateText) {
@@ -583,8 +766,32 @@
       render();
     }
 
+    function switchScreen(screenId) {
+      const screens = document.querySelectorAll(".screen");
+      const navItems = document.querySelectorAll(".nav-item");
+
+      screens.forEach(function(screen) {
+        screen.classList.remove("active");
+      });
+
+      navItems.forEach(function(item) {
+        item.classList.remove("active");
+      });
+
+      document.getElementById(screenId).classList.add("active");
+
+      navItems.forEach(function(item) {
+        if (item.getAttribute("data-screen") === screenId) {
+          item.classList.add("active");
+        }
+      });
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
     function saveStartDate() {
       const startDateInput = document.getElementById("startDate");
+
       if (!startDateInput.value) {
         alert("学習開始日を選択してください。");
         return;
@@ -699,6 +906,11 @@
       };
     }
 
+    function renderTodayDate() {
+      document.getElementById("todayDateText").textContent =
+        getJapaneseDateText(getTodayText());
+    }
+
     function getLearningMonthNumber() {
       const savedStartDate = localStorage.getItem("english-progress-start-date");
 
@@ -748,23 +960,6 @@
       });
     }
 
-    function calculateMonthlyTotalRate(year, month, daysInMonth) {
-      let totalDone = 0;
-      const totalPossible = daysInMonth * tasks.length;
-
-      for (let day = 1; day <= daysInMonth; day++) {
-        const dateText = formatDate(year, month, day);
-
-        tasks.forEach(function(taskName) {
-          if (loadData(dateText, taskName)) {
-            totalDone++;
-          }
-        });
-      }
-
-      return Math.round((totalDone / totalPossible) * 100);
-    }
-
     function calculateWeeklyTotalRate() {
       const today = new Date(getTodayText() + "T00:00:00");
       const dayOfWeek = today.getDay();
@@ -796,8 +991,8 @@
     }
 
     function renderWeeklyRate() {
-      const weeklyTotalRateText = document.getElementById("weeklyTotalRateText");
-      weeklyTotalRateText.textContent = calculateWeeklyTotalRate() + "%";
+      document.getElementById("weeklyTotalRateText").textContent =
+        calculateWeeklyTotalRate() + "%";
     }
 
     function renderSummary(year, month, daysInMonth) {
@@ -998,13 +1193,7 @@
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
 
-        if (
-          key &&
-          (
-            key.startsWith("english-progress-") ||
-            key === "english-progress-start-date"
-          )
-        ) {
+        if (key && key.startsWith("english-progress-")) {
           keysToRemove.push(key);
         }
       }
@@ -1022,9 +1211,10 @@
       const month = currentDate.getMonth();
       const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-      const monthTitle = document.getElementById("monthTitle");
-      monthTitle.textContent = year + "年 " + (month + 1) + "月";
+      document.getElementById("monthTitle").textContent =
+        year + "年 " + (month + 1) + "月";
 
+      renderTodayDate();
       renderStartDate();
       renderStudyDay();
       renderStreak();
@@ -1054,6 +1244,17 @@
 
     document.getElementById("resetData").addEventListener("click", function() {
       resetAllData();
+    });
+
+    document.getElementById("goCalendarFromToday").addEventListener("click", function() {
+      switchScreen("screenCalendar");
+    });
+
+    document.querySelectorAll(".nav-item").forEach(function(item) {
+      item.addEventListener("click", function() {
+        const screenId = item.getAttribute("data-screen");
+        switchScreen(screenId);
+      });
     });
 
     render();
