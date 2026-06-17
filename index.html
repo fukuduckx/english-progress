@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>英語学習進捗管理</title>
+  <title>英語学習進捗管理 v2</title>
 
   <style>
     body {
@@ -14,7 +14,7 @@
     }
 
     header {
-      padding: 28px 20px;
+      padding: 32px 20px;
       text-align: center;
       background: #3f5f4f;
       color: white;
@@ -37,8 +37,7 @@
       padding: 16px;
     }
 
-    .controls,
-    .summary {
+    .card {
       background: white;
       border-radius: 16px;
       padding: 16px;
@@ -67,14 +66,63 @@
       opacity: 0.85;
     }
 
+    input[type="date"] {
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+    }
+
     .month-title {
       font-size: 22px;
       font-weight: bold;
       text-align: center;
     }
 
-    .summary h2 {
-      margin-top: 0;
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .dashboard-box {
+      background: #f6f3ec;
+      border-radius: 14px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .dashboard-box span {
+      display: block;
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    .dashboard-box strong {
+      font-size: 28px;
+      color: #3f5f4f;
+    }
+
+    .today-task-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .today-task {
+      background: #f6f3ec;
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .plan-list {
+      margin: 0;
+      padding-left: 20px;
+      line-height: 1.8;
     }
 
     .summary-grid {
@@ -163,6 +211,12 @@
       color: white;
     }
 
+    .hint {
+      color: #666;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
     @media (max-width: 700px) {
       .container {
         padding: 12px;
@@ -176,7 +230,9 @@
         display: none;
       }
 
-      .summary-grid {
+      .summary-grid,
+      .dashboard-grid,
+      .today-task-grid {
         grid-template-columns: 1fr 1fr;
       }
 
@@ -198,17 +254,55 @@
 <body>
   <header>
     <h1>英語学習進捗管理</h1>
-    <p>単語・文法・英会話・リスニング</p>
+    <p>外資系広告企業への転職を目指す1年計画</p>
   </header>
 
   <div class="container">
-    <div class="controls">
+
+    <div class="card">
+      <h2>学習スタート設定</h2>
+      <label for="startDate">学習開始日：</label>
+      <input type="date" id="startDate" />
+      <button id="saveStartDate">保存</button>
+      <p class="hint">最初に一度だけ設定してください。あとから変更もできます。</p>
+    </div>
+
+    <div class="card">
+      <h2>現在の状況</h2>
+      <div class="dashboard-grid">
+        <div class="dashboard-box">
+          <span>今日は</span>
+          <strong id="studyDayText">-</strong>
+        </div>
+        <div class="dashboard-box">
+          <span>連続学習</span>
+          <strong id="streakText">0日</strong>
+        </div>
+        <div class="dashboard-box">
+          <span>今月の総合達成率</span>
+          <strong id="monthlyTotalRateText">0%</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>今日の学習</h2>
+      <div class="today-task-grid" id="todayTaskGrid"></div>
+    </div>
+
+    <div class="card">
+      <h2>今月の学習プラン</h2>
+      <h3 id="monthlyGoal"></h3>
+      <ul class="plan-list" id="monthlyPlan"></ul>
+    </div>
+
+    <div class="card controls">
       <button id="prevMonth">前の月</button>
       <div class="month-title" id="monthTitle"></div>
       <button id="nextMonth">次の月</button>
     </div>
 
-    <div class="summary">
+    <div class="card">
       <h2>今月の達成率</h2>
       <div class="summary-grid" id="summaryGrid"></div>
     </div>
@@ -220,10 +314,138 @@
     const tasks = ["単語", "文法", "英会話", "リスニング"];
     let currentDate = new Date();
 
+    const monthlyPlans = [
+      {
+        month: 1,
+        goal: "基礎英語の復活",
+        plan: [
+          "金のフレーズを1日50語見る",
+          "Grammar in Use Unit 1〜30を進める",
+          "TOEIC音声を毎日聞く",
+          "英会話は週2回、自己紹介を練習する"
+        ]
+      },
+      {
+        month: 2,
+        goal: "高校英語のやり直し",
+        plan: [
+          "Grammar in Use Unit 31〜60を進める",
+          "趣味や休日の過ごし方を英語で話す",
+          "英会話は週2回継続する",
+          "リスニングは短い音声を繰り返し聞く"
+        ]
+      },
+      {
+        month: 3,
+        goal: "TOEIC700点レベルを目指す",
+        plan: [
+          "公式TOEIC問題集を使い始める",
+          "毎日1パートずつ問題に触れる",
+          "5分間の自己紹介を完成させる",
+          "英会話は週2〜3回に増やす"
+        ]
+      },
+      {
+        month: 4,
+        goal: "広告英語を始める",
+        plan: [
+          "広告・マーケティング系の記事の見出しを読む",
+          "campaign / targeting / conversion などの単語を覚える",
+          "自分の仕事を英語で簡単に説明する",
+          "英会話は週3回を目標にする"
+        ]
+      },
+      {
+        month: 5,
+        goal: "営業英語を身につける",
+        plan: [
+          "課題ヒアリングの英語表現を練習する",
+          "What is your current challenge? を使えるようにする",
+          "商談の流れを英語で説明する",
+          "英会話で仕事の話を増やす"
+        ]
+      },
+      {
+        month: 6,
+        goal: "TOEIC750〜800点を目指す",
+        plan: [
+          "TOEIC模試を月2回解く",
+          "間違えた問題を復習する",
+          "自社サービスを英語で説明する",
+          "英会話は週3回を維持する"
+        ]
+      },
+      {
+        month: 7,
+        goal: "英文日記を始める",
+        plan: [
+          "毎日3行の英文日記を書く",
+          "仕事であったことを英語で書く",
+          "過去形・現在完了を使う練習をする",
+          "英会話で日記の内容を話す"
+        ]
+      },
+      {
+        month: 8,
+        goal: "広告記事を要約する",
+        plan: [
+          "週1本、広告記事を英語で要約する",
+          "要約した内容を英会話で話す",
+          "CTR / CPA / ROAS の説明を練習する",
+          "読む英語から話す英語へ変換する"
+        ]
+      },
+      {
+        month: 9,
+        goal: "会議英語を練習する",
+        plan: [
+          "進捗報告を英語で練習する",
+          "数字の増減を英語で説明する",
+          "CTR increased by 20% などを使う",
+          "簡単なKPI報告を英語でできるようにする"
+        ]
+      },
+      {
+        month: 10,
+        goal: "転職準備を始める",
+        plan: [
+          "英語履歴書の下書きを作る",
+          "LinkedInプロフィールを整える",
+          "転職理由を英語で話せるようにする",
+          "自己PRを英語で作る"
+        ]
+      },
+      {
+        month: 11,
+        goal: "英語面接対策",
+        plan: [
+          "Tell me about yourself を練習する",
+          "Why do you want to join our company? に答える",
+          "職務経歴を英語で説明する",
+          "週1回は模擬面接を行う"
+        ]
+      },
+      {
+        month: 12,
+        goal: "外資系広告企業への応募準備",
+        plan: [
+          "英語面接を実践形式で練習する",
+          "応募先企業を調べる",
+          "広告運用・DSP・営業経験を英語で説明する",
+          "TOEIC850点前後を目標に仕上げる"
+        ]
+      }
+    ];
+
     function formatDate(year, month, day) {
       const monthText = String(month + 1).padStart(2, "0");
       const dayText = String(day).padStart(2, "0");
       return year + "-" + monthText + "-" + dayText;
+    }
+
+    function getTodayText() {
+      const today = new Date();
+      return formatDate(today.getFullYear(), today.getMonth(), today.getDate());
     }
 
     function getKey(dateText, taskName) {
@@ -240,6 +462,12 @@
       localStorage.setItem(key, value ? "true" : "false");
     }
 
+    function isAnyTaskDone(dateText) {
+      return tasks.some(function(taskName) {
+        return loadData(dateText, taskName);
+      });
+    }
+
     function toggleTask(dateText, taskName) {
       const currentValue = loadData(dateText, taskName);
       saveData(dateText, taskName, !currentValue);
@@ -253,6 +481,177 @@
         1
       );
       render();
+    }
+
+    function saveStartDate() {
+      const startDateInput = document.getElementById("startDate");
+      if (!startDateInput.value) {
+        alert("学習開始日を選択してください。");
+        return;
+      }
+
+      localStorage.setItem("english-progress-start-date", startDateInput.value);
+      render();
+    }
+
+    function renderStartDate() {
+      const savedStartDate = localStorage.getItem("english-progress-start-date");
+      const startDateInput = document.getElementById("startDate");
+
+      if (savedStartDate) {
+        startDateInput.value = savedStartDate;
+      } else {
+        startDateInput.value = getTodayText();
+      }
+    }
+
+    function renderStudyDay() {
+      const savedStartDate = localStorage.getItem("english-progress-start-date");
+      const studyDayText = document.getElementById("studyDayText");
+
+      if (!savedStartDate) {
+        studyDayText.textContent = "未設定";
+        return;
+      }
+
+      const start = new Date(savedStartDate + "T00:00:00");
+      const today = new Date(getTodayText() + "T00:00:00");
+
+      const diffTime = today.getTime() - start.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+      if (diffDays < 1) {
+        studyDayText.textContent = "開始前";
+      } else {
+        studyDayText.textContent = diffDays + "日目";
+      }
+    }
+
+    function renderStreak() {
+      const streakText = document.getElementById("streakText");
+      let streak = 0;
+
+      const today = new Date(getTodayText() + "T00:00:00");
+
+      for (let i = 0; i < 3650; i++) {
+        const target = new Date(today);
+        target.setDate(today.getDate() - i);
+
+        const dateText = formatDate(
+          target.getFullYear(),
+          target.getMonth(),
+          target.getDate()
+        );
+
+        if (isAnyTaskDone(dateText)) {
+          streak++;
+        } else {
+          break;
+        }
+      }
+
+      streakText.textContent = streak + "日";
+    }
+
+    function renderTodayTasks() {
+      const todayTaskGrid = document.getElementById("todayTaskGrid");
+      todayTaskGrid.innerHTML = "";
+
+      const todayText = getTodayText();
+
+      tasks.forEach(function(taskName) {
+        const taskDiv = document.createElement("div");
+        taskDiv.className = "today-task";
+
+        const label = document.createElement("span");
+        label.textContent = taskName;
+
+        const check = document.createElement("div");
+        check.className = "check";
+
+        const isDone = loadData(todayText, taskName);
+
+        if (isDone) {
+          check.classList.add("done");
+          check.textContent = "○";
+        } else {
+          check.textContent = "×";
+        }
+
+        check.addEventListener("click", function() {
+          toggleTask(todayText, taskName);
+        });
+
+        taskDiv.appendChild(label);
+        taskDiv.appendChild(check);
+        todayTaskGrid.appendChild(taskDiv);
+      });
+    }
+
+    function getLearningMonthNumber() {
+      const savedStartDate = localStorage.getItem("english-progress-start-date");
+
+      if (!savedStartDate) {
+        return 1;
+      }
+
+      const start = new Date(savedStartDate + "T00:00:00");
+      const viewMonth = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        1
+      );
+
+      let monthNumber =
+        (viewMonth.getFullYear() - start.getFullYear()) * 12 +
+        (viewMonth.getMonth() - start.getMonth()) +
+        1;
+
+      if (monthNumber < 1) {
+        monthNumber = 1;
+      }
+
+      if (monthNumber > 12) {
+        monthNumber = 12;
+      }
+
+      return monthNumber;
+    }
+
+    function renderMonthlyPlan() {
+      const monthlyGoal = document.getElementById("monthlyGoal");
+      const monthlyPlan = document.getElementById("monthlyPlan");
+
+      monthlyPlan.innerHTML = "";
+
+      const learningMonth = getLearningMonthNumber();
+      const planData = monthlyPlans[learningMonth - 1];
+
+      monthlyGoal.textContent =
+        "学習" + learningMonth + "ヶ月目：" + planData.goal;
+
+      planData.plan.forEach(function(item) {
+        const li = document.createElement("li");
+        li.textContent = item;
+        monthlyPlan.appendChild(li);
+      });
+    }
+
+    function calculateMonthlyTotalRate(year, month, daysInMonth) {
+      let totalDone = 0;
+      const totalPossible = daysInMonth * tasks.length;
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateText = formatDate(year, month, day);
+
+        tasks.forEach(function(taskName) {
+          if (loadData(dateText, taskName)) {
+            totalDone++;
+          }
+        });
+      }
+
+      return Math.round((totalDone / totalPossible) * 100);
     }
 
     function renderSummary(year, month, daysInMonth) {
@@ -297,6 +696,9 @@
         "<small>" + totalDone + "/" + totalPossible + "</small>";
 
       summaryGrid.appendChild(totalCard);
+
+      document.getElementById("monthlyTotalRateText").textContent =
+        totalRate + "%";
     }
 
     function renderCalendar(year, month, daysInMonth) {
@@ -320,12 +722,7 @@
         calendar.appendChild(emptyDiv);
       }
 
-      const today = new Date();
-      const todayText = formatDate(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate()
-      );
+      const todayText = getTodayText();
 
       for (let day = 1; day <= daysInMonth; day++) {
         const dateText = formatDate(year, month, day);
@@ -382,6 +779,11 @@
       const monthTitle = document.getElementById("monthTitle");
       monthTitle.textContent = year + "年 " + (month + 1) + "月";
 
+      renderStartDate();
+      renderStudyDay();
+      renderStreak();
+      renderTodayTasks();
+      renderMonthlyPlan();
       renderSummary(year, month, daysInMonth);
       renderCalendar(year, month, daysInMonth);
     }
@@ -392,6 +794,10 @@
 
     document.getElementById("nextMonth").addEventListener("click", function() {
       changeMonth(1);
+    });
+
+    document.getElementById("saveStartDate").addEventListener("click", function() {
+      saveStartDate();
     });
 
     render();
