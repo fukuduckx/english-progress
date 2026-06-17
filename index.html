@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>英語学習進捗管理 v2</title>
+  <title>英語学習進捗管理 v3</title>
 
   <style>
     body {
@@ -66,11 +66,31 @@
       opacity: 0.85;
     }
 
-    input[type="date"] {
+    .danger-button {
+      background: #9b3f3f;
+    }
+
+    input[type="date"],
+    textarea {
+      box-sizing: border-box;
+      width: 100%;
       padding: 10px;
       border-radius: 10px;
       border: 1px solid #ccc;
       font-size: 15px;
+      font-family: inherit;
+    }
+
+    input[type="date"] {
+      max-width: 220px;
+      width: auto;
+    }
+
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+      margin-top: 8px;
+      background: #fffaf2;
     }
 
     .month-title {
@@ -81,7 +101,7 @@
 
     .dashboard-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 12px;
     }
 
@@ -164,7 +184,7 @@
 
     .day {
       background: white;
-      min-height: 150px;
+      min-height: 210px;
       border-radius: 14px;
       padding: 10px;
       box-shadow: 0 3px 10px rgba(0,0,0,0.06);
@@ -204,6 +224,7 @@
       font-weight: bold;
       cursor: pointer;
       user-select: none;
+      flex-shrink: 0;
     }
 
     .check.done {
@@ -211,10 +232,43 @@
       color: white;
     }
 
+    .memo-label {
+      display: block;
+      margin-top: 10px;
+      font-size: 13px;
+      color: #666;
+      font-weight: bold;
+    }
+
+    .day-memo {
+      min-height: 54px;
+      font-size: 13px;
+      padding: 8px;
+      margin-top: 6px;
+    }
+
     .hint {
       color: #666;
       font-size: 13px;
       margin-top: 8px;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 900px) {
+      .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .summary-grid,
+      .today-task-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
 
     @media (max-width: 700px) {
@@ -248,13 +302,30 @@
         font-size: 18px;
       }
     }
+
+    @media (max-width: 420px) {
+      .summary-grid,
+      .dashboard-grid,
+      .today-task-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .controls {
+        flex-direction: column;
+      }
+
+      input[type="date"] {
+        width: 100%;
+        max-width: none;
+      }
+    }
   </style>
 </head>
 
 <body>
   <header>
     <h1>英語学習進捗管理</h1>
-    <p>外資系広告企業への転職を目指す1年計画</p>
+    <p>単語・文法・英会話・リスニング</p>
   </header>
 
   <div class="container">
@@ -279,7 +350,11 @@
           <strong id="streakText">0日</strong>
         </div>
         <div class="dashboard-box">
-          <span>今月の総合達成率</span>
+          <span>今週の達成率</span>
+          <strong id="weeklyTotalRateText">0%</strong>
+        </div>
+        <div class="dashboard-box">
+          <span>今月の達成率</span>
           <strong id="monthlyTotalRateText">0%</strong>
         </div>
       </div>
@@ -288,6 +363,10 @@
     <div class="card">
       <h2>今日の学習</h2>
       <div class="today-task-grid" id="todayTaskGrid"></div>
+
+      <label class="memo-label" for="todayMemo">今日のメモ</label>
+      <textarea id="todayMemo" placeholder="例：今日は金フレ50語。英会話で自己紹介が少し詰まった。"></textarea>
+      <p class="hint">入力すると自動で保存されます。</p>
     </div>
 
     <div class="card">
@@ -305,6 +384,15 @@
     <div class="card">
       <h2>今月の達成率</h2>
       <div class="summary-grid" id="summaryGrid"></div>
+    </div>
+
+    <div class="card">
+      <h2>データ管理</h2>
+      <p class="hint">CSV書き出しをすると、学習記録をスプレッドシートなどで確認できます。</p>
+      <div class="button-row">
+        <button id="exportCsv">CSVを書き出す</button>
+        <button id="resetData" class="danger-button">全データをリセット</button>
+      </div>
     </div>
 
     <div class="calendar" id="calendar"></div>
@@ -452,6 +540,10 @@
       return "english-progress-" + dateText + "-" + taskName;
     }
 
+    function getMemoKey(dateText) {
+      return "english-progress-memo-" + dateText;
+    }
+
     function loadData(dateText, taskName) {
       const key = getKey(dateText, taskName);
       return localStorage.getItem(key) === "true";
@@ -460,6 +552,14 @@
     function saveData(dateText, taskName, value) {
       const key = getKey(dateText, taskName);
       localStorage.setItem(key, value ? "true" : "false");
+    }
+
+    function loadMemo(dateText) {
+      return localStorage.getItem(getMemoKey(dateText)) || "";
+    }
+
+    function saveMemo(dateText, memoText) {
+      localStorage.setItem(getMemoKey(dateText), memoText);
     }
 
     function isAnyTaskDone(dateText) {
@@ -588,6 +688,17 @@
       });
     }
 
+    function renderTodayMemo() {
+      const todayText = getTodayText();
+      const todayMemo = document.getElementById("todayMemo");
+
+      todayMemo.value = loadMemo(todayText);
+
+      todayMemo.oninput = function() {
+        saveMemo(todayText, todayMemo.value);
+      };
+    }
+
     function getLearningMonthNumber() {
       const savedStartDate = localStorage.getItem("english-progress-start-date");
 
@@ -652,6 +763,41 @@
       }
 
       return Math.round((totalDone / totalPossible) * 100);
+    }
+
+    function calculateWeeklyTotalRate() {
+      const today = new Date(getTodayText() + "T00:00:00");
+      const dayOfWeek = today.getDay();
+
+      const weekStart = new Date(today);
+      weekStart.setDate(today.getDate() - dayOfWeek);
+
+      let totalDone = 0;
+      const totalPossible = 7 * tasks.length;
+
+      for (let i = 0; i < 7; i++) {
+        const target = new Date(weekStart);
+        target.setDate(weekStart.getDate() + i);
+
+        const dateText = formatDate(
+          target.getFullYear(),
+          target.getMonth(),
+          target.getDate()
+        );
+
+        tasks.forEach(function(taskName) {
+          if (loadData(dateText, taskName)) {
+            totalDone++;
+          }
+        });
+      }
+
+      return Math.round((totalDone / totalPossible) * 100);
+    }
+
+    function renderWeeklyRate() {
+      const weeklyTotalRateText = document.getElementById("weeklyTotalRateText");
+      weeklyTotalRateText.textContent = calculateWeeklyTotalRate() + "%";
     }
 
     function renderSummary(year, month, daysInMonth) {
@@ -767,8 +913,108 @@
           dayDiv.appendChild(taskDiv);
         });
 
+        const memoLabel = document.createElement("label");
+        memoLabel.className = "memo-label";
+        memoLabel.textContent = "メモ";
+
+        const memo = document.createElement("textarea");
+        memo.className = "day-memo";
+        memo.placeholder = "一言メモ";
+        memo.value = loadMemo(dateText);
+
+        memo.addEventListener("input", function() {
+          saveMemo(dateText, memo.value);
+        });
+
+        dayDiv.appendChild(memoLabel);
+        dayDiv.appendChild(memo);
+
         calendar.appendChild(dayDiv);
       }
+    }
+
+    function exportCsv() {
+      const savedStartDate = localStorage.getItem("english-progress-start-date");
+      const startDateText = savedStartDate || getTodayText();
+
+      const start = new Date(startDateText + "T00:00:00");
+      const end = new Date(start);
+      end.setDate(start.getDate() + 365);
+
+      let csv = "日付,単語,文法,英会話,リスニング,メモ\n";
+
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const dateText = formatDate(
+          d.getFullYear(),
+          d.getMonth(),
+          d.getDate()
+        );
+
+        const row = [
+          dateText,
+          loadData(dateText, "単語") ? "○" : "×",
+          loadData(dateText, "文法") ? "○" : "×",
+          loadData(dateText, "英会話") ? "○" : "×",
+          loadData(dateText, "リスニング") ? "○" : "×",
+          '"' + loadMemo(dateText).replace(/"/g, '""') + '"'
+        ];
+
+        csv += row.join(",") + "\n";
+      }
+
+      const bom = "\uFEFF";
+      const blob = new Blob([bom + csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "english-progress.csv";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(url);
+    }
+
+    function resetAllData() {
+      const firstConfirm = confirm(
+        "本当に全データをリセットしますか？\n単語・文法・英会話・リスニング・メモ・開始日が削除されます。"
+      );
+
+      if (!firstConfirm) {
+        return;
+      }
+
+      const secondConfirm = confirm(
+        "この操作は元に戻せません。\n本当に削除しますか？"
+      );
+
+      if (!secondConfirm) {
+        return;
+      }
+
+      const keysToRemove = [];
+
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+
+        if (
+          key &&
+          (
+            key.startsWith("english-progress-") ||
+            key === "english-progress-start-date"
+          )
+        ) {
+          keysToRemove.push(key);
+        }
+      }
+
+      keysToRemove.forEach(function(key) {
+        localStorage.removeItem(key);
+      });
+
+      alert("学習データをリセットしました。");
+      render();
     }
 
     function render() {
@@ -782,7 +1028,9 @@
       renderStartDate();
       renderStudyDay();
       renderStreak();
+      renderWeeklyRate();
       renderTodayTasks();
+      renderTodayMemo();
       renderMonthlyPlan();
       renderSummary(year, month, daysInMonth);
       renderCalendar(year, month, daysInMonth);
@@ -798,6 +1046,14 @@
 
     document.getElementById("saveStartDate").addEventListener("click", function() {
       saveStartDate();
+    });
+
+    document.getElementById("exportCsv").addEventListener("click", function() {
+      exportCsv();
+    });
+
+    document.getElementById("resetData").addEventListener("click", function() {
+      resetAllData();
     });
 
     render();
