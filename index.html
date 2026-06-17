@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>英語学習進捗管理</title>
+
   <style>
     body {
       margin: 0;
@@ -13,10 +14,21 @@
     }
 
     header {
-      padding: 20px;
+      padding: 28px 20px;
       text-align: center;
       background: #3f5f4f;
       color: white;
+    }
+
+    header h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
+    }
+
+    header p {
+      margin: 0;
+      font-size: 15px;
+      opacity: 0.9;
     }
 
     .container {
@@ -56,8 +68,13 @@
     }
 
     .month-title {
-      font-size: 20px;
+      font-size: 22px;
       font-weight: bold;
+      text-align: center;
+    }
+
+    .summary h2 {
+      margin-top: 0;
     }
 
     .summary-grid {
@@ -75,8 +92,13 @@
 
     .summary-card strong {
       display: block;
-      font-size: 22px;
+      font-size: 24px;
       margin-top: 6px;
+      color: #3f5f4f;
+    }
+
+    .summary-card small {
+      color: #666;
     }
 
     .calendar {
@@ -100,6 +122,10 @@
       box-shadow: 0 3px 10px rgba(0,0,0,0.06);
     }
 
+    .day.today {
+      outline: 3px solid #3f5f4f;
+    }
+
     .empty {
       background: transparent;
       box-shadow: none;
@@ -114,13 +140,13 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin: 6px 0;
+      margin: 7px 0;
       font-size: 14px;
     }
 
     .check {
-      width: 28px;
-      height: 28px;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
       background: #ddd;
       color: #777;
@@ -138,6 +164,10 @@
     }
 
     @media (max-width: 700px) {
+      .container {
+        padding: 12px;
+      }
+
       .calendar {
         grid-template-columns: 1fr;
       }
@@ -153,9 +183,18 @@
       .day {
         min-height: auto;
       }
+
+      .controls {
+        gap: 12px;
+      }
+
+      .month-title {
+        font-size: 18px;
+      }
     }
   </style>
 </head>
+
 <body>
   <header>
     <h1>英語学習進捗管理</h1>
@@ -164,9 +203,9 @@
 
   <div class="container">
     <div class="controls">
-      <button onclick="changeMonth(-1)">前の月</button>
+      <button id="prevMonth">前の月</button>
       <div class="month-title" id="monthTitle"></div>
-      <button onclick="changeMonth(1)">次の月</button>
+      <button id="nextMonth">次の月</button>
     </div>
 
     <div class="summary">
@@ -181,31 +220,39 @@
     const tasks = ["単語", "文法", "英会話", "リスニング"];
     let currentDate = new Date();
 
-    function getKey(date, task) {
-      return `${date}-${task}`;
+    function formatDate(year, month, day) {
+      const monthText = String(month + 1).padStart(2, "0");
+      const dayText = String(day).padStart(2, "0");
+      return year + "-" + monthText + "-" + dayText;
     }
 
-    function loadData(date, task) {
-      return localStorage.getItem(getKey(date, task)) === "true";
+    function getKey(dateText, taskName) {
+      return "english-progress-" + dateText + "-" + taskName;
     }
 
-    function saveData(date, task, value) {
-      localStorage.setItem(getKey(date, task), value);
+    function loadData(dateText, taskName) {
+      const key = getKey(dateText, taskName);
+      return localStorage.getItem(key) === "true";
     }
 
-    function toggleTask(date, task) {
-      const current = loadData(date, task);
-      saveData(date, task, !current);
+    function saveData(dateText, taskName, value) {
+      const key = getKey(dateText, taskName);
+      localStorage.setItem(key, value ? "true" : "false");
+    }
+
+    function toggleTask(dateText, taskName) {
+      const currentValue = loadData(dateText, taskName);
+      saveData(dateText, taskName, !currentValue);
       render();
     }
 
     function changeMonth(offset) {
-      currentDate.setMonth(currentDate.getMonth() + offset);
+      currentDate = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth() + offset,
+        1
+      );
       render();
-    }
-
-    function formatDate(year, month, day) {
-      return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     }
 
     function renderSummary(year, month, daysInMonth) {
@@ -213,90 +260,139 @@
       summaryGrid.innerHTML = "";
 
       let totalDone = 0;
-      let totalPossible = daysInMonth * tasks.length;
+      const totalPossible = daysInMonth * tasks.length;
 
-      tasks.forEach(task => {
-        let done = 0;
+      tasks.forEach(function(taskName) {
+        let doneCount = 0;
 
         for (let day = 1; day <= daysInMonth; day++) {
-          const date = formatDate(year, month, day);
-          if (loadData(date, task)) done++;
+          const dateText = formatDate(year, month, day);
+
+          if (loadData(dateText, taskName)) {
+            doneCount++;
+          }
         }
 
-        totalDone += done;
+        totalDone += doneCount;
 
-        const rate = Math.round((done / daysInMonth) * 100);
+        const rate = Math.round((doneCount / daysInMonth) * 100);
 
-        summaryGrid.innerHTML += `
-          <div class="summary-card">
-            ${task}
-            <strong>${rate}%</strong>
-            <small>${done}/${daysInMonth}日</small>
-          </div>
-        `;
+        const card = document.createElement("div");
+        card.className = "summary-card";
+        card.innerHTML =
+          taskName +
+          "<strong>" + rate + "%</strong>" +
+          "<small>" + doneCount + "/" + daysInMonth + "日</small>";
+
+        summaryGrid.appendChild(card);
       });
 
       const totalRate = Math.round((totalDone / totalPossible) * 100);
 
-      summaryGrid.innerHTML += `
-        <div class="summary-card">
-          総合
-          <strong>${totalRate}%</strong>
-          <small>${totalDone}/${totalPossible}</small>
-        </div>
-      `;
+      const totalCard = document.createElement("div");
+      totalCard.className = "summary-card";
+      totalCard.innerHTML =
+        "総合" +
+        "<strong>" + totalRate + "%</strong>" +
+        "<small>" + totalDone + "/" + totalPossible + "</small>";
+
+      summaryGrid.appendChild(totalCard);
+    }
+
+    function renderCalendar(year, month, daysInMonth) {
+      const calendar = document.getElementById("calendar");
+      calendar.innerHTML = "";
+
+      const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+
+      weekdays.forEach(function(weekday) {
+        const weekdayDiv = document.createElement("div");
+        weekdayDiv.className = "weekday";
+        weekdayDiv.textContent = weekday;
+        calendar.appendChild(weekdayDiv);
+      });
+
+      const firstDay = new Date(year, month, 1).getDay();
+
+      for (let i = 0; i < firstDay; i++) {
+        const emptyDiv = document.createElement("div");
+        emptyDiv.className = "day empty";
+        calendar.appendChild(emptyDiv);
+      }
+
+      const today = new Date();
+      const todayText = formatDate(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate()
+      );
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateText = formatDate(year, month, day);
+
+        const dayDiv = document.createElement("div");
+        dayDiv.className = "day";
+
+        if (dateText === todayText) {
+          dayDiv.classList.add("today");
+        }
+
+        const dateDiv = document.createElement("div");
+        dateDiv.className = "date";
+        dateDiv.textContent = day + "日";
+        dayDiv.appendChild(dateDiv);
+
+        tasks.forEach(function(taskName) {
+          const taskDiv = document.createElement("div");
+          taskDiv.className = "task";
+
+          const label = document.createElement("span");
+          label.textContent = taskName;
+
+          const check = document.createElement("div");
+          check.className = "check";
+
+          const isDone = loadData(dateText, taskName);
+
+          if (isDone) {
+            check.classList.add("done");
+            check.textContent = "○";
+          } else {
+            check.textContent = "×";
+          }
+
+          check.addEventListener("click", function() {
+            toggleTask(dateText, taskName);
+          });
+
+          taskDiv.appendChild(label);
+          taskDiv.appendChild(check);
+          dayDiv.appendChild(taskDiv);
+        });
+
+        calendar.appendChild(dayDiv);
+      }
     }
 
     function render() {
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth();
-
-      document.getElementById("monthTitle").textContent =
-        `${year年 ${month + 1}月`;
-
-      const calendar = document.getElementById("calendar");
-      calendar.innerHTML = "";
-
-      const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
-      weekdays.forEach(day => {
-        calendar.innerHTML += `<div class="weekday">${day}</div>`;
-      });
-
-      const firstDay = new Date(year, month, 1).getDay();
       const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-      for (let i = 0; i < firstDay; i++) {
-        calendar.innerHTML += `<div class="day empty"></div>`;
-      }
-
-      for (let day = 1; day <= daysInMonth; day++) {
-        const date = formatDate(year, month, day);
-
-        let taskHtml = tasks.map(task => {
-          const done = loadData(date, task);
-          return `
-            <div class="task">
-              <span>${task}</span>
-              <div 
-                class="check ${done ? "done" : ""}"
-                onclick="toggleTask('${date}', '${task}')"
-              >
-                ${done ? "○" : "×"}
-              </div>
-            </div>
-          `;
-        }).join("");
-
-        calendar.innerHTML += `
-          <div class="day">
-            <div class="date">${day}</div>
-            ${taskHtml}
-          </div>
-        `;
-      }
+      const monthTitle = document.getElementById("monthTitle");
+      monthTitle.textContent = year + "年 " + (month + 1) + "月";
 
       renderSummary(year, month, daysInMonth);
+      renderCalendar(year, month, daysInMonth);
     }
+
+    document.getElementById("prevMonth").addEventListener("click", function() {
+      changeMonth(-1);
+    });
+
+    document.getElementById("nextMonth").addEventListener("click", function() {
+      changeMonth(1);
+    });
 
     render();
   </script>
